@@ -1,0 +1,6 @@
+Model,Accuracy,Macro-F1,MDR (Critical),Selected Sensors
+1. BPSO,0.75,0.5671,0.8333,7/18
+2. BWOA,0.71,0.6184,0.6333,3/18
+3. BHPWOA (Paper),0.75,0.5671,0.8333,7/18
+4. Phase 1 (Co-Opt),0.73,0.57,0.8,7/18
+5. Phase 2 (Proposed),0.622,0.5509,0.6133,9/18
