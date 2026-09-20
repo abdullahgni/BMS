@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+temp_log.txt
+raw_extracted.txt
+extract_csv.py
+find_csv.py
+check_csv.py
+.DS_Store
