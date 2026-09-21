@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import time
 import warnings
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 from sklearn.neighbors import KNeighborsClassifier
@@ -12,47 +12,39 @@ warnings.filterwarnings('ignore')
 
 print("Script starting...", flush=True)
 
-# 1. Load Original Dataset
+# 1. Load Original Dataset exactly as in bms.py
 df = pd.read_csv('EV_Battery_Charging_TR_Dataset_with_Notes.csv')
 
-# 3-Class Target Encoding as in Mayingi et al. (2026)
-def map_3class(status):
-    s = str(status).strip().upper()
-    if s == 'OK':
-        return 0
-    elif s == 'WARNING':
-        return 1
-    else:  # CRITICAL / ALARM / RUNAWAY
-        return 2
+# Drop non-feature metadata columns (matching bms.py)
+df = df.drop(columns=["Timestamp", "ChargerID", "CellID", "Notes"], errors='ignore')
 
-df['Target_3Class'] = df['BMS_Status'].apply(map_3class)
-
-drop_cols = ['Timestamp', 'ChargerID', 'CellID', 'Notes', 'BMS_Status', 'EventFlag']
-df = df.drop(columns=drop_cols, errors='ignore')
-
-for col in df.select_dtypes(include=['object']).columns:
-    if col != 'Target_3Class':
-        df[col] = pd.factorize(df[col])[0]
+# Label encode categorical columns (ChargingStage, BMS_Status, EventFlag) as in bms.py
+label_encoder = LabelEncoder()
+categorical_columns = ["ChargingStage", "BMS_Status", "EventFlag"]
+for col in categorical_columns:
+    if col in df.columns:
+        df[col] = label_encoder.fit_transform(df[col])
 
 if 'MoistureDetected' in df.columns:
     df['MoistureDetected'] = df['MoistureDetected'].astype(int)
 
-X = df.drop(columns=['Target_3Class'])
-y = df['Target_3Class']
+# Target: BMS_Status (3-Class: 0=Critical, 1=OK, 2=Warning from LabelEncoder)
+X = df.drop(columns=["BMS_Status"])
+y = df["BMS_Status"]
 num_features = X.shape[1]
 
 scaler = MinMaxScaler()
 X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
 
-# Standard Train/Test split for Paper Baselines (80/20)
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, stratify=y, random_state=42)
+# Split matching bms.py (test_size=0.2, random_state=42, stratify=y)
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42, stratify=y)
 
-# Helper function to compute per-class MDR for Critical class (Class 2)
 def calc_critical_mdr(y_true, y_pred):
+    # In LabelEncoder, 'Critical' is index 0
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1, 2])
-    total_critical = np.sum(y_true == 2)
+    total_critical = np.sum(y_true == 0)
     if total_critical > 0:
-        correct_critical = cm[2, 2]
+        correct_critical = cm[0, 0]
         return 1.0 - (correct_critical / total_critical)
     return 0.0
 
@@ -60,7 +52,7 @@ def calc_critical_mdr(y_true, y_pred):
 # EVALUATION FUNCTIONS
 # -------------------------------------------------------------
 
-# 1-3. Paper Setup: KNN (k=5), Pure Fitness without MDR penalty
+# 1-3. Paper Setup: KNN (k=5), matching bms.py fitness function
 def eval_paper_knn(particle):
     mask = (particle[:num_features] > 0.5).astype(int)
     num_sel = np.sum(mask)
@@ -70,7 +62,7 @@ def eval_paper_knn(particle):
     X_tr = X_train.iloc[:, mask.astype(bool)]
     X_te = X_test.iloc[:, mask.astype(bool)]
     
-    knn = KNeighborsClassifier(n_neighbors=5, metric='euclidean', n_jobs=1)
+    knn = KNeighborsClassifier(n_neighbors=5)
     knn.fit(X_tr, y_train)
     preds = knn.predict(X_te)
     
@@ -139,7 +131,7 @@ def eval_phase2_robust(particle):
 # -------------------------------------------------------------
 # RUNNER
 # -------------------------------------------------------------
-def run_benchmark(name, eval_fn, co_opt=False, mode="pso", num_particles=15, max_iterations=50):
+def run_benchmark(name, eval_fn, co_opt=False, mode="pso", num_particles=25, max_iterations=50):
     dims = num_features + 2 if co_opt else num_features
     np.random.seed(42)
     pos = np.random.uniform(0.0, 1.0, size=(num_particles, dims))
@@ -158,7 +150,6 @@ def run_benchmark(name, eval_fn, co_opt=False, mode="pso", num_particles=15, max
     print(f"\n--- Running {name} ---", flush=True)
     start_time = time.time()
     
-    # Init
     for i in range(num_particles):
         f, acc, f1, num_sel, mdr = eval_fn(pos[i])
         p_best_fit[i] = f
@@ -166,7 +157,6 @@ def run_benchmark(name, eval_fn, co_opt=False, mode="pso", num_particles=15, max
             g_best_fit, g_best_pos = f, pos[i].copy()
             g_best_acc, g_best_f1, g_best_num, g_best_mdr = acc, f1, num_sel, mdr
             
-    # Iterations
     for iteration in range(max_iterations):
         a = 2 - (2 * iteration / max_iterations)
         is_pso = mode == "pso" or (mode == "hybrid" and iteration < max_iterations // 2)
@@ -220,7 +210,7 @@ def run_benchmark(name, eval_fn, co_opt=False, mode="pso", num_particles=15, max
     }
 
 results = []
-# Baselines: 100 iterations total (50/50 split), KNN k=5, 3-class target matching Mayingi et al. (2026)
+# Baselines matching bms.py & Mayingi et al. (2026) exact feature set
 results.append(run_benchmark("1. BPSO (Paper Baseline)", eval_paper_knn, co_opt=False, mode="pso", max_iterations=50))
 results.append(run_benchmark("2. BWOA (Paper Baseline)", eval_paper_knn, co_opt=False, mode="woa", max_iterations=50))
 results.append(run_benchmark("3. BHPWOA (Paper Baseline)", eval_paper_knn, co_opt=False, mode="hybrid", max_iterations=50))
@@ -230,6 +220,6 @@ results.append(run_benchmark("4. Phase 1 (Co-Opt RF)", eval_phase1_coopt, co_opt
 results.append(run_benchmark("5. Phase 2 (Proposed 5-Fold CV + XAI)", eval_phase2_robust, co_opt=True, mode="hybrid", max_iterations=50))
 
 df_res = pd.DataFrame(results)
-print("\n================ FINAL REPRODUCED & PROPOSED BENCHMARK TABLE ================")
+print("\n================ FINAL EXACT BMS.PY REPRODUCED TABLE ================")
 print(df_res.to_string(index=False))
 df_res.to_csv("reproduced_and_proposed_benchmark.csv", index=False)
