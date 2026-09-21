@@ -1,1 +1,0 @@
-battery_voltage,battery_current' in content:\n            # Extract everything from 'battery_voltage' onwards\n            csv_data = content[content.find('battery_voltage,battery_current'):]\n            # Remove any trailing error messages injected by the system\n            if '

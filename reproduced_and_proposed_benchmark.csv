@@ -2,5 +2,5 @@ Model,Classifier,Accuracy,Macro-F1,MDR (Critical Class),Selected Sensors,Sensor 
 1. BPSO (Paper Baseline),KNN (k=5),0.71,0.4308,0.75,9/19,"ChargingStage, DemandCurrent_A, AvgTemp_C, AmbientTemp_C, StateOfHealth_%, VibrationLevel_mg, MoistureDetected, ChargePower_kW, TR_Probability"
 2. BWOA (Paper Baseline),KNN (k=5),0.71,0.397,0.8333,4/19,"DemandCurrent_A, StateOfHealth_%, VibrationLevel_mg, MoistureDetected"
 3. BHPWOA (Paper Baseline),KNN (k=5),0.71,0.4308,0.75,9/19,"ChargingStage, DemandCurrent_A, AvgTemp_C, AmbientTemp_C, StateOfHealth_%, VibrationLevel_mg, MoistureDetected, ChargePower_kW, TR_Probability"
-4. Phase 1 (Co-Opt RF),RandomForest (Co-Tuned),0.72,0.412,0.5,8/19,"CellVoltage_V, ChargeCurrent_A, SOC_%, MinTemp_C, InternalResistance_mOhm, Pressure_kPa, TR_Probability, VibrationLevel_mg"
-5. Phase 2 (Proposed 5-Fold CV + XAI),RandomForest (Co-Tuned),0.7,0.3869,0.2394,10/19,"CellVoltage_V, PackVoltage_V, ChargeCurrent_A, DemandCurrent_A, SOC_%, MaxTemp_C, MinTemp_C, InternalResistance_mOhm, Pressure_kPa, TR_Probability"
+4. Phase 1 (Co-Opt RF),RandomForest (Co-Tuned),0.72,0.3444,1.0,3/19,"ChargingStage, ChargeCurrent_A, VibrationLevel_mg"
+5. Phase 2 (Proposed 5-Fold CV + XAI),RandomForest (Co-Tuned),0.568,0.3869,0.7606,5/19,"CellVoltage_V, ChargeCurrent_A, MinTemp_C, InternalResistance_mOhm, Pressure_kPa"
