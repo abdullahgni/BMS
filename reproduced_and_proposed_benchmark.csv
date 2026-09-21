@@ -1,6 +1,6 @@
 Model,Classifier,Accuracy,Macro-F1,MDR (Critical Class),Selected Sensors,Sensor Names
-1. BPSO (Paper Baseline),KNN (k=5),0.68,0.3432,1.0,4/18,"ChargingStage, PackVoltage_V, MoistureDetected, Pressure_kPa"
-2. BWOA (Paper Baseline),KNN (k=5),0.68,0.3462,0.9167,2/18,"Pressure_kPa, TR_Probability"
-3. BHPWOA (Paper Baseline),KNN (k=5),0.7,0.3543,0.9167,3/18,"ChargingStage, PackVoltage_V, MoistureDetected"
-4. Phase 1 (Co-Opt RF),RandomForest (Co-Tuned),0.71,0.3582,0.9167,7/18,"PackVoltage_V, DemandVoltage_V, ChargeCurrent_A, DemandCurrent_A, SOC_%, AmbientTemp_C, VibrationLevel_mg"
-5. Phase 2 (Proposed 5-Fold CV + XAI),RandomForest (Co-Tuned),0.592,0.3708,0.8606,9/18,"CellVoltage_V, DemandVoltage_V, ChargeCurrent_A, DemandCurrent_A, MaxTemp_C, InternalResistance_mOhm, StateOfHealth_%, VibrationLevel_mg, Pressure_kPa"
+1. BPSO (Paper Baseline),KNN (k=5),0.71,0.4308,0.75,9/19,"ChargingStage, DemandCurrent_A, AvgTemp_C, AmbientTemp_C, StateOfHealth_%, VibrationLevel_mg, MoistureDetected, ChargePower_kW, TR_Probability"
+2. BWOA (Paper Baseline),KNN (k=5),0.71,0.397,0.8333,4/19,"DemandCurrent_A, StateOfHealth_%, VibrationLevel_mg, MoistureDetected"
+3. BHPWOA (Paper Baseline),KNN (k=5),0.71,0.4308,0.75,9/19,"ChargingStage, DemandCurrent_A, AvgTemp_C, AmbientTemp_C, StateOfHealth_%, VibrationLevel_mg, MoistureDetected, ChargePower_kW, TR_Probability"
+4. Phase 1 (Co-Opt RF),RandomForest (Co-Tuned),0.72,0.412,0.5,8/19,"CellVoltage_V, ChargeCurrent_A, SOC_%, MinTemp_C, InternalResistance_mOhm, Pressure_kPa, TR_Probability, VibrationLevel_mg"
+5. Phase 2 (Proposed 5-Fold CV + XAI),RandomForest (Co-Tuned),0.7,0.3869,0.2394,10/19,"CellVoltage_V, PackVoltage_V, ChargeCurrent_A, DemandCurrent_A, SOC_%, MaxTemp_C, MinTemp_C, InternalResistance_mOhm, Pressure_kPa, TR_Probability"
