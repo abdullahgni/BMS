@@ -87,7 +87,8 @@ def eval_phase1_coopt(particle):
     X_tr = X_train.iloc[:, mask.astype(bool)]
     X_te = X_test.iloc[:, mask.astype(bool)]
     
-    rf = RandomForestClassifier(n_estimators=n_est, max_depth=max_d, random_state=42, n_jobs=1)
+    # Class weight giving higher importance to Critical (class 0)
+    rf = RandomForestClassifier(n_estimators=n_est, max_depth=max_d, class_weight={0: 5.0, 1: 1.0, 2: 1.0}, random_state=42, n_jobs=1)
     rf.fit(X_tr, y_train)
     preds = rf.predict(X_te)
     
@@ -95,10 +96,10 @@ def eval_phase1_coopt(particle):
     f1 = f1_score(y_test, preds, average="macro")
     mdr_crit = calc_critical_mdr(y_test, preds)
     
-    fitness = -((acc + f1) / 2.0) + 0.1 * (num_sel / num_features)
+    fitness = -((acc + f1) / 2.0) + 0.1 * (num_sel / num_features) + 0.2 * mdr_crit
     return fitness, acc, f1, num_sel, mdr_crit
 
-# 5. Phase 2 (Proposed Robust + XAI): Stratified 5-Fold CV + Class Balancing
+# 5. Phase 2 (Proposed Robust + XAI): Stratified 5-Fold CV + Class Balancing & MDR Optimization
 def eval_phase2_robust(particle):
     mask = (particle[:num_features] > 0.5).astype(int)
     num_sel = np.sum(mask)
@@ -113,7 +114,8 @@ def eval_phase2_robust(particle):
     accs, f1s, mdrs = [], [], []
     
     for tr, te in skf.split(X_sel, y):
-        rf = RandomForestClassifier(n_estimators=n_est, max_depth=max_d, class_weight='balanced', random_state=42, n_jobs=1)
+        # Heavy class weight on Critical class (0) to force high recall and low MDR
+        rf = RandomForestClassifier(n_estimators=n_est, max_depth=max_d, class_weight={0: 8.0, 1: 1.0, 2: 1.5}, random_state=42, n_jobs=1)
         rf.fit(X_sel.iloc[tr], y.iloc[tr])
         preds = rf.predict(X_sel.iloc[te])
         
@@ -125,7 +127,8 @@ def eval_phase2_robust(particle):
     avg_f1 = np.mean(f1s)
     avg_mdr = np.mean(mdrs)
     
-    fitness = -((avg_acc + avg_f1) / 2.0) + 0.1 * (num_sel / num_features)
+    # Fitness includes direct MDR penalty to force selection of low MDR feature masks
+    fitness = -((avg_acc + avg_f1) / 2.0) + 0.1 * (num_sel / num_features) + 0.25 * avg_mdr
     return fitness, avg_acc, avg_f1, num_sel, avg_mdr
 
 # -------------------------------------------------------------
