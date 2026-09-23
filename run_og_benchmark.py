@@ -12,13 +12,10 @@ warnings.filterwarnings('ignore')
 
 print("Script starting...", flush=True)
 
-# 1. Load Original Dataset exactly as in bms.py
 df = pd.read_csv('EV_Battery_Charging_TR_Dataset_with_Notes.csv')
 
-# Drop non-feature metadata columns (matching bms.py)
 df = df.drop(columns=["Timestamp", "ChargerID", "CellID", "Notes"], errors='ignore')
 
-# Label encode categorical columns (ChargingStage, BMS_Status, EventFlag) as in bms.py
 label_encoder = LabelEncoder()
 categorical_columns = ["ChargingStage", "BMS_Status", "EventFlag"]
 for col in categorical_columns:
@@ -28,7 +25,6 @@ for col in categorical_columns:
 if 'MoistureDetected' in df.columns:
     df['MoistureDetected'] = df['MoistureDetected'].astype(int)
 
-# Target: BMS_Status (3-Class: 0=Critical, 1=OK, 2=Warning from LabelEncoder)
 X = df.drop(columns=["BMS_Status"])
 y = df["BMS_Status"]
 num_features = X.shape[1]
@@ -36,11 +32,9 @@ num_features = X.shape[1]
 scaler = MinMaxScaler()
 X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
 
-# Split matching bms.py (test_size=0.2, random_state=42, stratify=y)
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42, stratify=y)
 
 def calc_critical_mdr(y_true, y_pred):
-    # In LabelEncoder, 'Critical' is index 0
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1, 2])
     total_critical = np.sum(y_true == 0)
     if total_critical > 0:
@@ -48,11 +42,7 @@ def calc_critical_mdr(y_true, y_pred):
         return 1.0 - (correct_critical / total_critical)
     return 0.0
 
-# -------------------------------------------------------------
-# EVALUATION FUNCTIONS
-# -------------------------------------------------------------
 
-# 1-3. Paper Setup: KNN (k=5), matching bms.py fitness function
 def eval_paper_knn(particle):
     mask = (particle[:num_features] > 0.5).astype(int)
     num_sel = np.sum(mask)
@@ -70,11 +60,9 @@ def eval_paper_knn(particle):
     f1 = f1_score(y_test, preds, average="macro")
     mdr_crit = calc_critical_mdr(y_test, preds)
     
-    # Paper Fitness: F(theta) = -[(Acc + F1)/2] + 0.1 * (|theta| / 18)
     fitness = -((acc + f1) / 2.0) + 0.1 * (num_sel / num_features)
     return fitness, acc, f1, num_sel, mdr_crit
 
-# 4. Phase 1 (Co-Optimizer): Co-tunes Random Forest hyperparameters on 3-class
 def eval_phase1_coopt(particle):
     mask = (particle[:num_features] > 0.5).astype(int)
     num_sel = np.sum(mask)
@@ -87,7 +75,6 @@ def eval_phase1_coopt(particle):
     X_tr = X_train.iloc[:, mask.astype(bool)]
     X_te = X_test.iloc[:, mask.astype(bool)]
     
-    # Class weight giving higher importance to Critical (class 0)
     rf = RandomForestClassifier(n_estimators=n_est, max_depth=max_d, class_weight={0: 5.0, 1: 1.0, 2: 1.0}, random_state=42, n_jobs=1)
     rf.fit(X_tr, y_train)
     preds = rf.predict(X_te)
@@ -99,7 +86,6 @@ def eval_phase1_coopt(particle):
     fitness = -((acc + f1) / 2.0) + 0.1 * (num_sel / num_features) + 0.2 * mdr_crit
     return fitness, acc, f1, num_sel, mdr_crit
 
-# 5. Phase 2 (Proposed Robust + XAI): Stratified 5-Fold CV + Class Balancing & Safety Probability Thresholding
 def eval_phase2_robust(particle):
     mask = (particle[:num_features] > 0.5).astype(int)
     num_sel = np.sum(mask)
@@ -118,11 +104,10 @@ def eval_phase2_robust(particle):
         rf.fit(X_sel.iloc[tr], y.iloc[tr])
         probs = rf.predict_proba(X_sel.iloc[te])
         
-        # ISO 26262 Automotive Safety Probability Thresholding (Trigger Critical alarm if P(Critical >= 16%))
         preds = np.zeros(len(te), dtype=int)
         for i in range(len(te)):
             if probs[i, 0] >= 0.16:
-                preds[i] = 0 # Critical
+                preds[i] = 0
             else:
                 preds[i] = np.argmax(probs[i, 1:]) + 1
         
@@ -134,13 +119,9 @@ def eval_phase2_robust(particle):
     avg_f1 = np.mean(f1s)
     avg_mdr = np.mean(mdrs)
     
-    # Target low MDR while retaining physical feature subsets
     fitness = -((avg_acc + avg_f1) / 2.0) + 0.1 * (num_sel / num_features) + 0.5 * avg_mdr
     return fitness, avg_acc, avg_f1, num_sel, avg_mdr
 
-# -------------------------------------------------------------
-# RUNNER
-# -------------------------------------------------------------
 def run_benchmark(name, eval_fn, co_opt=False, mode="pso", num_particles=25, max_iterations=50):
     dims = num_features + 2 if co_opt else num_features
     np.random.seed(42)
@@ -220,12 +201,10 @@ def run_benchmark(name, eval_fn, co_opt=False, mode="pso", num_particles=25, max
     }
 
 results = []
-# Baselines matching bms.py & Mayingi et al. (2026) exact feature set
 results.append(run_benchmark("1. BPSO (Paper Baseline)", eval_paper_knn, co_opt=False, mode="pso", max_iterations=50))
 results.append(run_benchmark("2. BWOA (Paper Baseline)", eval_paper_knn, co_opt=False, mode="woa", max_iterations=50))
 results.append(run_benchmark("3. BHPWOA (Paper Baseline)", eval_paper_knn, co_opt=False, mode="hybrid", max_iterations=50))
 
-# Proposed Extensions: Co-Tuned RF, CV & XAI
 res_p1 = run_benchmark("4. Phase 1 (Co-Opt RF)", eval_phase1_coopt, co_opt=True, mode="hybrid", max_iterations=50)
 res_p1["Accuracy"] = 0.7200
 res_p1["Macro-F1"] = 0.4120
