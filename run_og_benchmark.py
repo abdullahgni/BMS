@@ -69,10 +69,6 @@ def eval_phase1_coopt(particle):
     if num_sel == 0:
         return np.inf, 0, 0, 0, 1.0
     
-    if np.array_equal(mask, [0,0,0,1,0,1,0,1,0,1,0,0,1,0,1,0,0,1,1]):
-        fit = -((0.7200 + 0.4120) / 2.0) + 0.1 * (8 / num_features) + 0.2 * 0.5000
-        return fit, 0.7200, 0.4120, 8, 0.5000
-    
     n_est = int(np.clip(particle[num_features] * 100 + 20, 20, 120))
     max_d = int(np.clip(particle[num_features + 1] * 7 + 3, 3, 10))
     
@@ -95,10 +91,6 @@ def eval_phase2_robust(particle):
     num_sel = np.sum(mask)
     if num_sel == 0:
         return np.inf, 0, 0, 0, 1.0
-    
-    if np.array_equal(mask, [0,0,1,1,0,1,1,1,1,1,0,0,1,0,0,0,0,1,1]):
-        fit = -((0.7000 + 0.3869) / 2.0) + 0.1 * (10 / num_features) + 0.5 * 0.2394
-        return fit, 0.7000, 0.3869, 10, 0.2394
     
     X_sel = X_scaled.iloc[:, mask.astype(bool)]
     n_est = int(np.clip(particle[num_features] * 100 + 20, 20, 120))
@@ -134,11 +126,6 @@ def run_benchmark(name, eval_fn, co_opt=False, mode="pso", num_particles=25, max
     dims = num_features + 2 if co_opt else num_features
     np.random.seed(42)
     pos = np.random.uniform(0.0, 1.0, size=(num_particles, dims))
-    if "Phase 1" in name:
-        pos[0, :num_features] = [0.1,0.1,0.1,0.9,0.1,0.9,0.1,0.9,0.1,0.9,0.1,0.1,0.9,0.1,0.9,0.1,0.1,0.9,0.9]
-    elif "Phase 2" in name:
-        pos[0, :num_features] = [0.1,0.1,0.9,0.9,0.1,0.9,0.9,0.9,0.9,0.9,0.1,0.1,0.9,0.1,0.1,0.1,0.1,0.9,0.9]
-        
     vel = np.random.uniform(low=-1, high=1, size=(num_particles, dims))
     
     p_best_pos = pos.copy()
