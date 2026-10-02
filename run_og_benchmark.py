@@ -106,7 +106,7 @@ def eval_phase2_robust(particle):
         
         preds = np.zeros(len(te), dtype=int)
         for i in range(len(te)):
-            if probs[i, 0] >= 0.16:
+            if probs[i, 0] >= 0.25:
                 preds[i] = 0
             else:
                 preds[i] = np.argmax(probs[i, 1:]) + 1
@@ -119,7 +119,7 @@ def eval_phase2_robust(particle):
     avg_f1 = np.mean(f1s)
     avg_mdr = np.mean(mdrs)
     
-    fitness = -((avg_acc + avg_f1) / 2.0) + 0.1 * (num_sel / num_features) + 0.5 * avg_mdr
+    fitness = -((avg_acc + avg_f1) / 2.0) + 0.1 * (num_sel / num_features) + 0.3 * avg_mdr
     return fitness, avg_acc, avg_f1, num_sel, avg_mdr
 
 def run_benchmark(name, eval_fn, co_opt=False, mode="pso", num_particles=25, max_iterations=50):

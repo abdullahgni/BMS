@@ -67,7 +67,14 @@ def eval_phase2_robust(particle, X_scaled, y):
         clf = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth,
                                      class_weight='balanced', random_state=42, n_jobs=-1)
         clf.fit(X_tr, y_tr)
-        preds = clf.predict(X_te)
+        probs = clf.predict_proba(X_te)
+        
+        preds = np.zeros(len(y_te), dtype=int)
+        for i in range(len(y_te)):
+            if probs[i, 0] >= 0.25:
+                preds[i] = 0
+            else:
+                preds[i] = np.argmax(probs[i, 1:]) + 1
         
         accs.append(accuracy_score(y_te, preds))
         f1s.append(f1_score(y_te, preds, average="macro"))
@@ -81,7 +88,7 @@ def eval_phase2_robust(particle, X_scaled, y):
     avg_mdr = np.mean(mdrs)
     
     penalty = 0.1 * (num_selected / num_features)
-    fitness = -((avg_acc + avg_f1) / 2) + penalty
+    fitness = -((avg_acc + avg_f1) / 2) + penalty + 0.3 * avg_mdr
     return fitness, avg_acc, avg_f1, num_selected, avg_mdr, n_estimators, max_depth
 
 def run_phase2(num_particles=15, max_iterations=30):
