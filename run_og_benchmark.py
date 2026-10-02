@@ -206,19 +206,9 @@ results.append(run_benchmark("2. BWOA (Paper Baseline)", eval_paper_knn, co_opt=
 results.append(run_benchmark("3. BHPWOA (Paper Baseline)", eval_paper_knn, co_opt=False, mode="hybrid", max_iterations=50))
 
 res_p1 = run_benchmark("4. Phase 1 (Co-Opt RF)", eval_phase1_coopt, co_opt=True, mode="hybrid", max_iterations=50)
-res_p1["Accuracy"] = 0.7200
-res_p1["Macro-F1"] = 0.4120
-res_p1["MDR (Critical Class)"] = 0.5000
-res_p1["Selected Sensors"] = "8/19"
-res_p1["Sensor Names"] = "CellVoltage_V, ChargeCurrent_A, SOC_%, MinTemp_C, InternalResistance_mOhm, Pressure_kPa, TR_Probability, VibrationLevel_mg"
 results.append(res_p1)
 
 res_p2 = run_benchmark("5. Phase 2 (Proposed 5-Fold CV + XAI)", eval_phase2_robust, co_opt=True, mode="hybrid", max_iterations=50)
-res_p2["Accuracy"] = 0.7000
-res_p2["Macro-F1"] = 0.3869
-res_p2["MDR (Critical Class)"] = 0.2394
-res_p2["Selected Sensors"] = "10/19"
-res_p2["Sensor Names"] = "CellVoltage_V, PackVoltage_V, ChargeCurrent_A, DemandCurrent_A, SOC_%, MaxTemp_C, MinTemp_C, InternalResistance_mOhm, Pressure_kPa, TR_Probability"
 results.append(res_p2)
 
 df_res = pd.DataFrame(results)
