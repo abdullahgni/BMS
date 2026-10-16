@@ -6,4 +6,7 @@ raw_extracted.txt
 extract_csv.py
 find_csv.py
 check_csv.py
+test_*.py
+tune_eval.py
+final_benchmark_table.txt
 .DS_Store

@@ -100,16 +100,9 @@ def eval_phase2_robust(particle):
     accs, f1s, mdrs = [], [], []
     
     for tr, te in skf.split(X_sel, y):
-        rf = RandomForestClassifier(n_estimators=n_est, max_depth=max_d, class_weight='balanced', random_state=42, n_jobs=1)
+        rf = RandomForestClassifier(n_estimators=n_est, max_depth=max_d, class_weight={0: 6.0, 1: 1.0, 2: 1.2}, random_state=42, n_jobs=1)
         rf.fit(X_sel.iloc[tr], y.iloc[tr])
-        probs = rf.predict_proba(X_sel.iloc[te])
-        
-        preds = np.zeros(len(te), dtype=int)
-        for i in range(len(te)):
-            if probs[i, 0] >= 0.25:
-                preds[i] = 0
-            else:
-                preds[i] = np.argmax(probs[i, 1:]) + 1
+        preds = rf.predict(X_sel.iloc[te])
         
         accs.append(accuracy_score(y.iloc[te], preds))
         f1s.append(f1_score(y.iloc[te], preds, average="macro"))
