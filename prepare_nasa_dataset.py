@@ -95,7 +95,8 @@ def extract_nasa_features(metadata_path, data_dir, output_csv, battery_ids=None,
             'Energy_Delivered_Wh': round(energy_wh, 4),
             'Max_Load_Current_A': round(float(np.max(c_load)), 4),
             'Min_Load_Voltage_V': round(float(np.min(v_load)), 4),
-            'Avg_Load_Voltage_V': round(float(np.mean(v_load)), 4)
+            'Avg_Load_Voltage_V': round(float(np.mean(v_load)), 4),
+            'Ambient_Temp_C': float(row['ambient_temperature'])
         })
         
     out_df = pd.DataFrame(records)
@@ -129,4 +130,13 @@ if __name__ == '__main__':
         output_csv='nasa_battery_benchmark_all24c.csv',
         battery_ids=None,
         ambient_temp=24
+    )
+    
+    # 3. Full Global Benchmark: All Temperatures (4°C, 22°C, 24°C, 43°C, 44°C - 2,750 cycles)
+    extract_nasa_features(
+        metadata_path=metadata_path,
+        data_dir=data_dir,
+        output_csv='nasa_battery_benchmark_global_2750.csv',
+        battery_ids=None,
+        ambient_temp=None
     )
