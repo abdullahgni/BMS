@@ -21,20 +21,17 @@ def run_shap_analysis():
     shap_values = explainer(X_sub)
     shap_critical = shap_values[:, :, 0]
 
-    plt.figure(figsize=(9, 4.5), dpi=150)
+    plt.figure(figsize=(9, 4.5), dpi=120)
     shap.plots.bar(shap_critical, show=False)
     plt.title("SHAP Global Feature Importance (Critical Class)", fontsize=12, fontweight="bold")
     plt.tight_layout()
-    plt.savefig("shap_summary_bar.png")
     plt.show()
 
-    plt.figure(figsize=(9, 4.5), dpi=150)
+    plt.figure(figsize=(9, 4.5), dpi=120)
     shap.plots.beeswarm(shap_critical, show=False)
     plt.title("SHAP Beeswarm Distribution for Critical Thermal Runaway", fontsize=12, fontweight="bold")
     plt.tight_layout()
-    plt.savefig("shap_beeswarm_critical.png")
     plt.show()
-    print("SHAP explainability plots generated successfully.")
 
 if __name__ == "__main__":
     run_shap_analysis()

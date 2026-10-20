@@ -1,6 +1,0 @@
-Phase / Method,Classifier,Accuracy,Macro-F1,Critical MDR,Sensors,Selected Sensors
-Baseline 1 (BPSO - Paper),KNN (k=5),64.80%,0.4209,59.14%,8 / 17,"ChargingStage, DemandCurrent_A, AvgTemp_C, AmbientTemp_C, StateOfHealth_%, VibrationLevel_mg, MoistureDetected, ChargePower_kW"
-Baseline 2 (BWOA - Paper),KNN (k=5),57.00%,0.3543,73.01%,4 / 17,"DemandCurrent_A, StateOfHealth_%, VibrationLevel_mg, MoistureDetected"
-Baseline 3 (BHPWOA - Paper),KNN (k=5),64.80%,0.4209,59.14%,8 / 17,"ChargingStage, DemandCurrent_A, AvgTemp_C, AmbientTemp_C, StateOfHealth_%, VibrationLevel_mg, MoistureDetected, ChargePower_kW"
-Phase 1 (Co-Opt RF),RandomForest (Co-Tuned),67.80%,0.4466,34.22%,6 / 17,"ChargingStage, ChargeCurrent_A, SOC_%, StateOfHealth_%, MoistureDetected, Pressure_kPa"
-Proposed HGWO-PSO (Ours),RF (HGWO-PSO Co-Tuned),94.20%,0.8803,5.89%,5 / 17,"DemandVoltage_V, SOC_%, MaxTemp_C, AvgTemp_C, MoistureDetected"

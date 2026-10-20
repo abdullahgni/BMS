@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_convergence(save_path="convergence_curves.png"):
+def plot_convergence():
     iterations = np.arange(1, 31)
 
     bpso_curve = -0.970 - 0.020 * (1 - np.exp(-iterations / 4.0))
@@ -9,7 +9,7 @@ def plot_convergence(save_path="convergence_curves.png"):
     bhpwoa_curve = -0.972 - 0.018 * (1 - np.exp(-iterations / 5.0))
     hgwo_curve = -0.975 - 0.022 * (1 - np.exp(-iterations / 2.5))
 
-    plt.figure(figsize=(9, 5), dpi=150)
+    plt.figure(figsize=(9, 5), dpi=120)
     plt.plot(iterations, bpso_curve, label="BPSO (Baseline)", color="#1f77b4", linewidth=2)
     plt.plot(iterations, bwoa_curve, label="BWOA (Baseline)", color="#ff7f0e", linewidth=2)
     plt.plot(iterations, bhpwoa_curve, label="BHPWOA (Baseline)", color="#2ca02c", linewidth=2)
@@ -21,9 +21,7 @@ def plot_convergence(save_path="convergence_curves.png"):
     plt.legend(frameon=True)
     plt.grid(True, linestyle="--", alpha=0.6)
     plt.tight_layout()
-    plt.savefig(save_path)
     plt.show()
-    print(f"Convergence plot saved to {save_path}")
 
 if __name__ == "__main__":
     plot_convergence()

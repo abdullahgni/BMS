@@ -9,7 +9,7 @@ def plot_cross_dataset():
     ev_mdr = [59.14, 73.01, 7.18]
     nasa_mdr = [2.31, 1.54, 2.31]
 
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5), dpi=150)
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5), dpi=120)
     x = np.arange(len(methods))
     w = 0.35
 
@@ -48,9 +48,7 @@ def plot_cross_dataset():
     axes[2].grid(axis="y", linestyle="--", alpha=0.5)
 
     plt.tight_layout()
-    plt.savefig("cross_dataset_comparison.png")
     plt.show()
-    print("Cross-dataset comparison plots saved successfully.")
 
 if __name__ == "__main__":
     plot_cross_dataset()

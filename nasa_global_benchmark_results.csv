@@ -1,5 +1,0 @@
-Method / Framework,Classifier,Accuracy,Macro-F1,Critical MDR,Sensors,Selected Physical Sensors
-Baseline 1: BPSO (Paper),KNN (k=5),97.45%,0.9676,1.02%,4 / 15,"Avg_Temp_C, Avg_Current_A, Energy_Delivered_Wh, Max_Load_Current_A"
-Baseline 2: BWOA (Paper),KNN (k=5),97.78%,0.9713,0.86%,2 / 15,"Discharge_Duration_s, Energy_Delivered_Wh"
-Standard Full-Feature RF,Random Forest (Default),98.29%,0.9781,0.55%,15 / 15,All Features
-Proposed HGWO-PSO (Ours),"RF (n=120, d=10, w0=1.5)",98.36%,0.9789,0.47%,3 / 15,"Discharge_Duration_s, Energy_Delivered_Wh, Avg_Load_Voltage_V"
