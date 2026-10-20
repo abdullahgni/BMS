@@ -10,3 +10,8 @@ test_*.py
 tune_eval.py
 final_benchmark_table.txt
 .DS_Store
+*.docx
+FINAL_PROJECT_REPORT*.md
+generate_humanized_report.py
+step_*.txt
+test_colab_*.png

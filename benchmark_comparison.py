@@ -1,75 +1,84 @@
 import argparse
 import pandas as pd
-from bpso import run_bpso
-from bwoa import run_bwoa
-from bhpwoa import run_bhpwoa
-from hgwo_pso import run_hgwo_pso
+from preprocess import load_and_preprocess
+from bpso import BPSO
+from bwoa import BWOA
+from bhpwoa import BHPWOA
+from hgwo_pso import HGWO_PSO
 
-def generate_comparison_table(dataset="ev", iter_count=5):
-    print(f"\nEvaluating complete benchmark suite on dataset: {dataset.upper()}...\n")
-    m1 = run_bpso(dataset, n_particles=15, max_iter=iter_count)
-    m2 = run_bwoa(dataset, n_whales=15, max_iter=iter_count)
-    m3 = run_bhpwoa(dataset, n_agents=15, max_iter=iter_count)
-    m4 = run_hgwo_pso(dataset, n_wolves=15, max_iter=iter_count)
+def run_benchmark(data_path="EV_Battery_Charging_TR_Dataset_with_Notes.csv", iter_count=5):
+    X, y, feature_names = load_and_preprocess(data_path)
+    print("=" * 80)
+    print(f"EVALUATING COMPLETE BENCHMARK ON: {data_path}")
+    print(f"Dataset Size: {X.shape[0]} samples, {X.shape[1]} physical channels")
+    print("=" * 80 + "\n")
 
-    def get_feats(m):
-        return m.get("selected_features", m.get("selected", []))
+    print("[1/4] Running BPSO...")
+    bpso = BPSO(n_particles=15, max_iter=iter_count)
+    res_bpso = bpso.fit(X, y)
 
-    f1 = get_feats(m1)
-    f2 = get_feats(m2)
-    f3 = get_feats(m3)
-    f4 = get_feats(m4)
+    print("\n[2/4] Running BWOA...")
+    bwoa = BWOA(n_whales=15, max_iter=iter_count)
+    res_bwoa = bwoa.fit(X, y)
+
+    print("\n[3/4] Running BHPWOA...")
+    bhpwoa = BHPWOA(n_agents=15, max_iter=iter_count)
+    res_bhpwoa = bhpwoa.fit(X, y)
+
+    print("\n[4/4] Running Proposed HGWO-PSO...")
+    hgwo = HGWO_PSO(n_wolves=15, max_iter=iter_count)
+    res_hgwo = hgwo.fit(X, y)
 
     results = [
         {
             "Method": "Baseline 1: BPSO",
             "Classifier": "KNN (k=5)",
-            "Accuracy": f"{m1['accuracy']*100:.2f}%",
-            "Macro-F1": f"{m1['macro_f1']:.4f}",
-            "Critical MDR": f"{m1['critical_mdr']*100:.2f}%",
-            "Sensors": len(f1),
-            "Selected Channels": ", ".join(f1)
+            "Accuracy": f"{res_bpso['accuracy']*100:.2f}%",
+            "Macro-F1": f"{res_bpso['macro_f1']:.4f}",
+            "Critical MDR": f"{res_bpso['critical_mdr']*100:.2f}%",
+            "Sensors": f"{len(res_bpso['selected_features'])} / {len(feature_names)}",
+            "Selected Channels": ", ".join(res_bpso['selected_features'])
         },
         {
             "Method": "Baseline 2: BWOA",
             "Classifier": "KNN (k=5)",
-            "Accuracy": f"{m2['accuracy']*100:.2f}%",
-            "Macro-F1": f"{m2['macro_f1']:.4f}",
-            "Critical MDR": f"{m2['critical_mdr']*100:.2f}%",
-            "Sensors": len(f2),
-            "Selected Channels": ", ".join(f2)
+            "Accuracy": f"{res_bwoa['accuracy']*100:.2f}%",
+            "Macro-F1": f"{res_bwoa['macro_f1']:.4f}",
+            "Critical MDR": f"{res_bwoa['critical_mdr']*100:.2f}%",
+            "Sensors": f"{len(res_bwoa['selected_features'])} / {len(feature_names)}",
+            "Selected Channels": ", ".join(res_bwoa['selected_features'])
         },
         {
             "Method": "Baseline 3: BHPWOA",
             "Classifier": "KNN (k=5)",
-            "Accuracy": f"{m3['accuracy']*100:.2f}%",
-            "Macro-F1": f"{m3['macro_f1']:.4f}",
-            "Critical MDR": f"{m3['critical_mdr']*100:.2f}%",
-            "Sensors": len(f3),
-            "Selected Channels": ", ".join(f3)
+            "Accuracy": f"{res_bhpwoa['accuracy']*100:.2f}%",
+            "Macro-F1": f"{res_bhpwoa['macro_f1']:.4f}",
+            "Critical MDR": f"{res_bhpwoa['critical_mdr']*100:.2f}%",
+            "Sensors": f"{len(res_bhpwoa['selected_features'])} / {len(feature_names)}",
+            "Selected Channels": ", ".join(res_bhpwoa['selected_features'])
         },
         {
             "Method": "Proposed HGWO-PSO",
             "Classifier": "Co-Tuned RF",
-            "Accuracy": f"{m4['accuracy']*100:.2f}%",
-            "Macro-F1": f"{m4['macro_f1']:.4f}",
-            "Critical MDR": f"{m4['critical_mdr']*100:.2f}%",
-            "Sensors": len(f4),
-            "Selected Channels": ", ".join(f4)
+            "Accuracy": f"{res_hgwo['accuracy']*100:.2f}%",
+            "Macro-F1": f"{res_hgwo['macro_f1']:.4f}",
+            "Critical MDR": f"{res_hgwo['critical_mdr']*100:.2f}%",
+            "Sensors": f"{len(res_hgwo['selected_features'])} / {len(feature_names)}",
+            "Selected Channels": ", ".join(res_hgwo['selected_features'])
         }
     ]
 
     df_comp = pd.DataFrame(results)
-    print("\n" + "="*95)
-    print(f"BENCHMARK COMPARISON TABLE ({dataset.upper()})")
-    print("="*95)
+    print("\n" + "=" * 95)
+    print(f"BENCHMARK COMPARISON TABLE ({data_path})")
+    print("=" * 95)
     print(df_comp[["Method", "Classifier", "Accuracy", "Macro-F1", "Critical MDR", "Sensors"]].to_string(index=False))
-    print("="*95 + "\n")
+    print("=" * 95 + "\n")
     return df_comp
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", choices=["ev", "nasa", "nasa_global"], default="ev")
+    parser.add_argument("--data", default="EV_Battery_Charging_TR_Dataset_with_Notes.csv")
     parser.add_argument("--iter", type=int, default=5)
     args = parser.parse_args()
-    generate_comparison_table(args.dataset, iter_count=args.iter)
+    run_benchmark(args.data, iter_count=args.iter)

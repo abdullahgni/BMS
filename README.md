@@ -60,14 +60,14 @@ cd BMS
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Run individual algorithms
-python bpso.py --dataset ev
-python bwoa.py --dataset ev
-python bhpwoa.py --dataset ev
-python hgwo_pso.py --dataset ev
+# 3. Run individual algorithms on any dataset
+python bpso.py --data EV_Battery_Charging_TR_Dataset_with_Notes.csv
+python bwoa.py --data EV_Battery_Charging_TR_Dataset_with_Notes.csv
+python bhpwoa.py --data EV_Battery_Charging_TR_Dataset_with_Notes.csv
+python hgwo_pso.py --data EV_Battery_Charging_TR_Dataset_with_Notes.csv
 
 # 4. View visual analysis & summary comparison table
 python plot_convergence.py
 python plot_shap.py
-python benchmark_comparison.py --dataset ev
+python benchmark_comparison.py --data EV_Battery_Charging_TR_Dataset_with_Notes.csv
 ```
