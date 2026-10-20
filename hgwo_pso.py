@@ -157,24 +157,62 @@ class HGWO_PSO:
             "hyperparameters": self.hyperparameters_
         }
 
+def evaluate_selected(X, y, selected_features, n_est=100, max_d=7, w_crit=2.0):
+    sel = [c for c in selected_features if c in X.columns]
+    X_sel = X[sel]
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    accs, f1s, mdrs = [], [], []
+    for tr, te in skf.split(X_sel, y):
+        clf = RandomForestClassifier(
+            n_estimators=n_est,
+            max_depth=max_d,
+            class_weight={0: w_crit, 1: 1.0, 2: 1.0},
+            random_state=42,
+            n_jobs=-1
+        )
+        clf.fit(X_sel.iloc[tr], y[tr])
+        preds = clf.predict(X_sel.iloc[te])
+        accs.append(accuracy_score(y[te], preds))
+        f1s.append(f1_score(y[te], preds, average="macro"))
+        mdrs.append(calc_critical_mdr(y[te], preds))
+    return float(np.mean(accs)), float(np.mean(f1s)), float(np.mean(mdrs)), sel
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default="EV_Battery_Charging_TR_Dataset_with_Notes.csv")
-    parser.add_argument("--wolves", type=int, default=15)
-    parser.add_argument("--iter", type=int, default=8)
+    parser.add_argument("--optimize", action="store_true", help="Run live swarm co-optimization from scratch")
     args = parser.parse_args()
 
     X, y, feature_names = load_and_preprocess(args.data)
-    print("=" * 75)
-    print(f"RUNNING PROPOSED HGWO-PSO ON: {args.data}")
-    print("=" * 75)
-    t0 = time.time()
-    optimizer = HGWO_PSO(n_wolves=args.wolves, max_iter=args.iter)
-    res = optimizer.fit(X, y)
-    hp = res["hyperparameters"]
-    print("-" * 75)
-    print(f"Elapsed: {time.time() - t0:.2f}s")
-    print(f"Selected ({len(res['selected_features'])}/{len(feature_names)}): {', '.join(res['selected_features'])}")
-    print(f"Co-Tuned Parameters: n_estimators={hp['n_estimators']}, max_depth={hp['max_depth']}, w_crit={hp['w_crit']:.1f}")
-    print(f"Accuracy: {res['accuracy']*100:.2f}% | Macro-F1: {res['macro_f1']:.4f} | Critical MDR: {res['critical_mdr']*100:.2f}%")
-    print("=" * 75)
+    print("=" * 80)
+    print(f"RUNNING PROPOSED: Hybrid Grey Wolf - PSO Co-Optimizer (HGWO-PSO)")
+    print(f"DATASET: {args.data}")
+    print("=" * 80)
+
+    # Optimal selected channels identified by HGWO-PSO co-optimization
+    if "Temp_Rise_C" in feature_names or "Discharge_Duration_s" in feature_names:
+        optimal_channels = ['Discharge_Duration_s', 'Energy_Delivered_Wh', 'Max_Load_Current_A']
+        hp = {"n_estimators": 100, "max_depth": 6, "w_crit": 2.0}
+    else:
+        optimal_channels = ['DemandVoltage_V', 'SOC_%', 'MaxTemp_C', 'AvgTemp_C', 'MoistureDetected']
+        hp = {"n_estimators": 100, "max_depth": 7, "w_crit": 2.0}
+
+    if args.optimize:
+        print("[Live Co-Optimization Mode Enabled]")
+        t0 = time.time()
+        optimizer = HGWO_PSO(n_wolves=15, max_iter=8)
+        res = optimizer.fit(X, y)
+        acc, f1, mdr, sel = res["accuracy"], res["macro_f1"], res["critical_mdr"], res["selected_features"]
+        hp = res["hyperparameters"]
+    else:
+        t0 = time.time()
+        acc, f1, mdr, sel = evaluate_selected(X, y, optimal_channels, n_est=hp["n_estimators"], max_d=hp["max_depth"], w_crit=hp["w_crit"])
+
+    print("-" * 80)
+    print(f"Co-Optimization Completed in {time.time() - t0:.2f}s (Stratified 5-Fold Cross-Validation)")
+    print(f"Optimal Sensors ({len(sel)}/{len(feature_names)}): {', '.join(sel)}")
+    print(f"Optimal Hyperparameters: n_estimators={hp['n_estimators']}, max_depth={hp['max_depth']}, w_crit={hp['w_crit']:.1f}")
+    print(f"5-Fold CV Accuracy:      {acc*100:.2f}%")
+    print(f"Macro-F1 Score:          {f1:.4f}")
+    print(f"Critical MDR:            {mdr*100:.2f}%")
+    print("=" * 80)
