@@ -200,7 +200,7 @@ if __name__ == "__main__":
     if args.optimize:
         print("[Live Co-Optimization Mode Enabled]")
         t0 = time.time()
-        optimizer = HGWO_PSO(n_wolves=10, max_iter=4)
+        optimizer = HGWO_PSO(n_wolves=10, max_iter=10)
         res = optimizer.fit(X, y)
         acc, f1, mdr, sel = res["accuracy"], res["macro_f1"], res["critical_mdr"], res["selected_features"]
         hp = res["hyperparameters"]
